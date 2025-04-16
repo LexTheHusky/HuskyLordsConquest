@@ -1,2 +1,14 @@
 fileFormatVersion: 2
 guid: f858e003ff52df946aeac3566fb3c4f7
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - goldMinePrefab: {fileID: 1136476003173168062, guid: 14cf122f7fd7961498bedac03531c7bd, type: 3}
+  - lumberMillPrefab: {fileID: 8952693842949418864, guid: 31318ab45a4649f479cef75200017837, type: 3}
+  - farmPrefab: {fileID: 2576157476567928537, guid: 7c5eab74255edf04fb022d30cd075fbf, type: 3}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
