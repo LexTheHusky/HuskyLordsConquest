@@ -7,7 +7,7 @@ public class ResourceProducer : MonoBehaviour
     public int baseAmountPerSecond = 5;
     public int level = 1;
     public int maxLevel = 3;
-    private int amountPerSecond;
+    public int amountPerSecond;
     private ResourceManager resourceManager;
     private float timer;
 

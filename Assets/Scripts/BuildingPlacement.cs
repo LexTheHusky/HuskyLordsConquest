@@ -3,14 +3,20 @@ using UnityEngine.EventSystems;
 
 public class BuildingPlacement : MonoBehaviour
 {
+    public GameObject townHallPrefab;
     public GameObject goldMinePrefab;
     public GameObject lumberMillPrefab;
     public GameObject farmPrefab;
+    public int townHallCost = 100;
     public int goldMineCost = 100;
     public int lumberMillCost = 50;
     public int farmCost = 20;
     public float tileSize = 1f;
     private ResourceManager resourceManager;
+    private GameObject selectedBuildingPrefab;
+    private int selectedBuildingCost;
+    private ResourceManager.ResourceType selectedCostType;
+    private bool hasPlacedTownHall = false;
 
     void Start()
     {
@@ -23,77 +29,101 @@ public class BuildingPlacement : MonoBehaviour
 
     void Update()
     {
-        // Debug-logging om te controleren of de muis over een UI-element is
-        if (EventSystem.current.IsPointerOverGameObject()) // Regel 27
+        if (EventSystem.current.IsPointerOverGameObject())
         {
-            Debug.Log("Mouse is over a UI element, skipping building placement.");
             return;
         }
-        else
-        {
-            Debug.Log("Mouse is NOT over a UI element, proceeding with building placement.");
-        }
 
-        if (Input.GetMouseButtonDown(0)) // Left click for GoldMine
+        if (selectedBuildingPrefab != null && Input.GetMouseButtonDown(0))
         {
-            Debug.Log("Left mouse button clicked for GoldMine placement.");
-            PlaceBuilding(goldMinePrefab, goldMineCost, ResourceManager.ResourceType.Gold);
-        }
-        if (Input.GetMouseButtonDown(1)) // Right click for LumberMill
-        {
-            Debug.Log("Right mouse button clicked for LumberMill placement.");
-            PlaceBuilding(lumberMillPrefab, lumberMillCost, ResourceManager.ResourceType.Wood);
-        }
-        if (Input.GetKeyDown(KeyCode.F)) // F key for Farm
-        {
-            Debug.Log("F key pressed for Farm placement.");
-            PlaceBuilding(farmPrefab, farmCost, ResourceManager.ResourceType.Food);
+            PlaceBuilding();
         }
     }
 
-    void PlaceBuilding(GameObject buildingPrefab, int cost, ResourceManager.ResourceType costType)
+    public void SelectBuilding(string buildingType)
     {
-        if (buildingPrefab == null)
+        // Alleen andere gebouwen selecteren als TownHall is geplaatst
+        if (!hasPlacedTownHall && buildingType != "TownHall")
         {
-            Debug.LogError("Building prefab is not assigned!");
+            Debug.Log("You must place a TownHall first!");
+            return;
+        }
+
+        switch (buildingType)
+        {
+            case "TownHall":
+                selectedBuildingPrefab = townHallPrefab;
+                selectedBuildingCost = townHallCost;
+                selectedCostType = ResourceManager.ResourceType.Gold;
+                break;
+            case "GoldMine":
+                selectedBuildingPrefab = goldMinePrefab;
+                selectedBuildingCost = goldMineCost;
+                selectedCostType = ResourceManager.ResourceType.Gold;
+                break;
+            case "LumberMill":
+                selectedBuildingPrefab = lumberMillPrefab;
+                selectedBuildingCost = lumberMillCost;
+                selectedCostType = ResourceManager.ResourceType.Wood;
+                break;
+            case "Farm":
+                selectedBuildingPrefab = farmPrefab;
+                selectedBuildingCost = farmCost;
+                selectedCostType = ResourceManager.ResourceType.Food;
+                break;
+            default:
+                selectedBuildingPrefab = null;
+                selectedBuildingCost = 0;
+                selectedCostType = ResourceManager.ResourceType.Gold;
+                break;
+        }
+        Debug.Log($"Selected building: {buildingType}");
+    }
+
+    void PlaceBuilding()
+    {
+        if (selectedBuildingPrefab == null)
+        {
+            Debug.Log("No building selected!");
             return;
         }
 
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-        mousePos.z = 0; // Ensure z is 0 for 2D
-        Debug.Log($"Mouse position in world space: {mousePos}");
+        mousePos.z = 0;
 
-        // Snap to grid
         mousePos.x = Mathf.Round(mousePos.x / tileSize) * tileSize;
         mousePos.y = Mathf.Round(mousePos.y / tileSize) * tileSize;
-        Debug.Log($"Snapped position: {mousePos}");
 
-        // Check for collisions (optional, to prevent overlap)
         Collider2D hit = Physics2D.OverlapPoint(mousePos);
         if (hit != null)
         {
-            Debug.Log($"Cannot place building here, space is occupied by {hit.gameObject.name}!");
+            Debug.Log("Cannot place building here, space is occupied!");
             return;
         }
 
         bool canAfford = false;
-        if (costType == ResourceManager.ResourceType.Gold)
+        if (selectedCostType == ResourceManager.ResourceType.Gold)
         {
-            canAfford = resourceManager.SpendGold(cost);
+            canAfford = resourceManager.SpendGold(selectedBuildingCost);
         }
-        else if (costType == ResourceManager.ResourceType.Wood)
+        else if (selectedCostType == ResourceManager.ResourceType.Wood)
         {
-            canAfford = resourceManager.SpendWood(cost);
+            canAfford = resourceManager.SpendWood(selectedBuildingCost);
         }
-        else if (costType == ResourceManager.ResourceType.Food)
+        else if (selectedCostType == ResourceManager.ResourceType.Food)
         {
-            canAfford = resourceManager.SpendFood(cost);
+            canAfford = resourceManager.SpendFood(selectedBuildingCost);
         }
 
         if (canAfford)
         {
-            Instantiate(buildingPrefab, mousePos, Quaternion.identity);
-            Debug.Log($"Placed {buildingPrefab.name} at position {mousePos}");
+            Instantiate(selectedBuildingPrefab, mousePos, Quaternion.identity);
+            Debug.Log($"Placed {selectedBuildingPrefab.name} at position {mousePos}");
+
+            if (selectedBuildingPrefab == townHallPrefab)
+            {
+                hasPlacedTownHall = true;
+            }
         }
         else
         {
