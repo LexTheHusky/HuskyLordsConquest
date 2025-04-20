@@ -8,6 +8,8 @@ TagManager:
   - Farm
   - TownHall
   - GoldMine
+  - Barrack
+  - Barracks
   layers:
   - Default
   - TransparentFX

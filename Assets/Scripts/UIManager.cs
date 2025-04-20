@@ -7,6 +7,7 @@ public class UIManager : MonoBehaviour
     public TextMeshProUGUI woodText;
     public TextMeshProUGUI foodText;
     public TextMeshProUGUI populationText;
+    public TextMeshProUGUI soldiersText; // Nieuwe TextMeshProUGUI voor soldaten
     private ResourceManager resourceManager;
 
     void Start()
@@ -16,22 +17,17 @@ public class UIManager : MonoBehaviour
         {
             Debug.LogError("ResourceManager not found in the scene!");
         }
-        UpdateUI();
     }
 
     void Update()
     {
-        UpdateUI();
-    }
-
-    void UpdateUI()
-    {
         if (resourceManager != null)
         {
-            goldText.text = "Gold: " + resourceManager.gold;
-            woodText.text = "Wood: " + resourceManager.wood;
-            foodText.text = "Food: " + resourceManager.food;
-            populationText.text = "Population: " + resourceManager.population + "/" + resourceManager.maxPopulation;
+            goldText.text = "Gold: " + resourceManager.gold.ToString("F0"); // Regel 28
+            woodText.text = "Wood: " + resourceManager.wood.ToString("F0"); // Regel 29
+            foodText.text = "Food: " + resourceManager.food.ToString("F0"); // Regel 30
+            populationText.text = "Population: " + resourceManager.population.ToString("F0"); // Regel 31
+            soldiersText.text = "Soldiers: " + resourceManager.soldiers.ToString(); // Regel 32
         }
     }
 }

@@ -2,14 +2,11 @@ using UnityEngine;
 
 public class ResourceProducer : MonoBehaviour
 {
-    public enum ResourceType { Gold, Wood, Food }
-    public ResourceType resourceType;
-    public int baseAmountPerSecond = 5;
+    public float amountPerSecond = 1f;
     public int level = 1;
     public int maxLevel = 3;
-    public int amountPerSecond;
-    private ResourceManager resourceManager;
     private float timer;
+    private ResourceManager resourceManager;
 
     void Start()
     {
@@ -18,7 +15,6 @@ public class ResourceProducer : MonoBehaviour
         {
             Debug.LogError("ResourceManager not found in the scene!");
         }
-        UpdateProductionRate();
     }
 
     void Update()
@@ -27,13 +23,35 @@ public class ResourceProducer : MonoBehaviour
         if (timer >= 1f)
         {
             timer -= 1f;
-            ProduceResource();
+            ProduceResources();
         }
     }
 
-    void UpdateProductionRate()
+    void ProduceResources()
     {
-        amountPerSecond = baseAmountPerSecond * level;
+        if (resourceManager == null) return;
+
+        float amountToProduce = amountPerSecond * level;
+        if (gameObject.CompareTag("GoldMine"))
+        {
+            resourceManager.AddGold(amountToProduce);
+            Debug.Log($"GoldMine produced {amountToProduce} gold. Total gold: {resourceManager.gold}");
+        }
+        else if (gameObject.CompareTag("LumberMill"))
+        {
+            resourceManager.AddWood(amountToProduce);
+            Debug.Log($"LumberMill produced {amountToProduce} wood. Total wood: {resourceManager.wood}");
+        }
+        else if (gameObject.CompareTag("Farm"))
+        {
+            resourceManager.AddFood(amountToProduce);
+            Debug.Log($"Farm produced {amountToProduce} food. Total food: {resourceManager.food}");
+        }
+        else if (gameObject.CompareTag("TownHall"))
+        {
+            resourceManager.AddGold(amountToProduce);
+            Debug.Log($"TownHall produced {amountToProduce} gold. Total gold: {resourceManager.gold}");
+        }
     }
 
     public void Upgrade()
@@ -41,33 +59,7 @@ public class ResourceProducer : MonoBehaviour
         if (level < maxLevel)
         {
             level++;
-            UpdateProductionRate();
-            Debug.Log($"{resourceType} production upgraded to level {level}. Now producing {amountPerSecond} per second.");
-        }
-        else
-        {
-            Debug.Log($"{resourceType} production is already at max level ({maxLevel})!");
-        }
-    }
-
-    void ProduceResource()
-    {
-        if (resourceManager == null) return;
-
-        if (resourceType == ResourceType.Gold)
-        {
-            resourceManager.gold += amountPerSecond;
-            Debug.Log($"Produced {amountPerSecond} gold. Total gold: {resourceManager.gold}");
-        }
-        else if (resourceType == ResourceType.Wood)
-        {
-            resourceManager.wood += amountPerSecond;
-            Debug.Log($"Produced {amountPerSecond} wood. Total wood: {resourceManager.wood}");
-        }
-        else if (resourceType == ResourceType.Food)
-        {
-            resourceManager.food += amountPerSecond;
-            Debug.Log($"Produced {amountPerSecond} food. Total food: {resourceManager.food}");
+            Debug.Log($"Upgraded {gameObject.name} to level {level}. Now producing {amountPerSecond * level} per second.");
         }
     }
 }

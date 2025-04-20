@@ -16,8 +16,23 @@ public class BuildingSelector : MonoBehaviour
             Debug.LogError("ResourceManager not found in the scene!");
         }
 
-        upgradePanel.SetActive(false);
-        upgradeButton.onClick.AddListener(UpgradeSelectedBuilding);
+        if (upgradePanel != null)
+        {
+            upgradePanel.SetActive(false);
+        }
+        else
+        {
+            Debug.LogError("UpgradePanel is not assigned in BuildingSelector!");
+        }
+
+        if (upgradeButton != null)
+        {
+            upgradeButton.onClick.AddListener(UpgradeSelectedBuilding);
+        }
+        else
+        {
+            Debug.LogError("UpgradeButton is not assigned in BuildingSelector!");
+        }
     }
 
     void Update()
@@ -28,7 +43,7 @@ public class BuildingSelector : MonoBehaviour
             Vector2 mousePos2D = new Vector2(mousePos.x, mousePos.y);
 
             Collider2D hit = Physics2D.OverlapPoint(mousePos2D);
-            if (hit != null && (hit.CompareTag("GoldMine") || hit.CompareTag("LumberMill") || hit.CompareTag("Farm") || hit.CompareTag("TownHall")))
+            if (hit != null && (hit.CompareTag("GoldMine") || hit.CompareTag("LumberMill") || hit.CompareTag("Farm") || hit.CompareTag("TownHall") || hit.CompareTag("Barrack")))
             {
                 selectedBuilding = hit.gameObject;
                 upgradePanel.SetActive(true);
@@ -42,7 +57,7 @@ public class BuildingSelector : MonoBehaviour
         }
     }
 
-    void UpgradeSelectedBuilding()
+    public void UpgradeSelectedBuilding() // Nu `public`
     {
         if (selectedBuilding == null)
         {
@@ -51,27 +66,47 @@ public class BuildingSelector : MonoBehaviour
         }
 
         ResourceProducer producer = selectedBuilding.GetComponent<ResourceProducer>();
-        if (producer == null)
+        if (producer != null)
         {
-            Debug.LogError("Selected building does not have a ResourceProducer component!");
+            if (producer.level >= producer.maxLevel)
+            {
+                Debug.Log("Building is already at max level!");
+                return;
+            }
+
+            if (resourceManager.SpendGold(100))
+            {
+                producer.Upgrade();
+                Debug.Log($"{selectedBuilding.name} upgraded to level {producer.level}. Now producing {producer.amountPerSecond} per second.");
+            }
+            else
+            {
+                Debug.Log("Not enough gold to upgrade!");
+            }
             return;
         }
 
-        if (producer.level >= producer.maxLevel) // Gebruik maxLevel uit ResourceProducer
+        Barrack barrack = selectedBuilding.GetComponent<Barrack>();
+        if (barrack != null)
         {
-            Debug.Log("Building is already at max level!");
+            if (barrack.level >= barrack.maxLevel)
+            {
+                Debug.Log("Barrack is already at max level!");
+                return;
+            }
+
+            if (resourceManager.SpendGold(100))
+            {
+                barrack.Upgrade();
+                Debug.Log($"{selectedBuilding.name} upgraded to level {barrack.level}. Now producing {barrack.soldiersPerSecond * barrack.level} soldiers per second.");
+            }
+            else
+            {
+                Debug.Log("Not enough gold to upgrade!");
+            }
             return;
         }
 
-        if (resourceManager.SpendGold(100))
-        {
-            producer.Upgrade(); // Gebruik de Upgrade-methode van ResourceProducer
-            Debug.Log($"{selectedBuilding.name} upgraded to level {producer.level}. Now producing {producer.amountPerSecond} per second.");
-        }
-        else
-        {
-            Debug.Log("Not enough gold to upgrade!");
-        }
+        Debug.LogError($"Selected building {selectedBuilding.name} does not have a ResourceProducer or Barrack component!");
     }
 }
-    

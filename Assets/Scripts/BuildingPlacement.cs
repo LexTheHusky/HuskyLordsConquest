@@ -1,5 +1,5 @@
 using UnityEngine;
-using UnityEngine.EventSystems;
+using System.Linq;
 
 public class BuildingPlacement : MonoBehaviour
 {
@@ -7,16 +7,10 @@ public class BuildingPlacement : MonoBehaviour
     public GameObject goldMinePrefab;
     public GameObject lumberMillPrefab;
     public GameObject farmPrefab;
-    public int townHallCost = 100;
-    public int goldMineCost = 100;
-    public int lumberMillCost = 50;
-    public int farmCost = 20;
+    public GameObject barrackPrefab;
     public float tileSize = 1f;
-    private ResourceManager resourceManager;
     private GameObject selectedBuildingPrefab;
-    private int selectedBuildingCost;
-    private ResourceManager.ResourceType selectedCostType;
-    private bool hasPlacedTownHall = false;
+    private ResourceManager resourceManager;
 
     void Start()
     {
@@ -27,107 +21,93 @@ public class BuildingPlacement : MonoBehaviour
         }
     }
 
+    public void SelectBuilding(GameObject buildingPrefab)
+    {
+        selectedBuildingPrefab = buildingPrefab;
+        Debug.Log($"Selected building to place: {buildingPrefab?.name ?? "None"}");
+    }
+
     void Update()
     {
-        if (EventSystem.current.IsPointerOverGameObject())
-        {
-            return;
-        }
-
-        if (selectedBuildingPrefab != null && Input.GetMouseButtonDown(0))
+        if (Input.GetMouseButtonDown(0) && selectedBuildingPrefab != null)
         {
             PlaceBuilding();
         }
     }
 
-    public void SelectBuilding(string buildingType)
-    {
-        // Alleen andere gebouwen selecteren als TownHall is geplaatst
-        if (!hasPlacedTownHall && buildingType != "TownHall")
-        {
-            Debug.Log("You must place a TownHall first!");
-            return;
-        }
-
-        switch (buildingType)
-        {
-            case "TownHall":
-                selectedBuildingPrefab = townHallPrefab;
-                selectedBuildingCost = townHallCost;
-                selectedCostType = ResourceManager.ResourceType.Gold;
-                break;
-            case "GoldMine":
-                selectedBuildingPrefab = goldMinePrefab;
-                selectedBuildingCost = goldMineCost;
-                selectedCostType = ResourceManager.ResourceType.Gold;
-                break;
-            case "LumberMill":
-                selectedBuildingPrefab = lumberMillPrefab;
-                selectedBuildingCost = lumberMillCost;
-                selectedCostType = ResourceManager.ResourceType.Wood;
-                break;
-            case "Farm":
-                selectedBuildingPrefab = farmPrefab;
-                selectedBuildingCost = farmCost;
-                selectedCostType = ResourceManager.ResourceType.Food;
-                break;
-            default:
-                selectedBuildingPrefab = null;
-                selectedBuildingCost = 0;
-                selectedCostType = ResourceManager.ResourceType.Gold;
-                break;
-        }
-        Debug.Log($"Selected building: {buildingType}");
-    }
-
     void PlaceBuilding()
     {
+        Debug.Log("Attempting to place building...");
         if (selectedBuildingPrefab == null)
         {
             Debug.Log("No building selected!");
             return;
         }
 
+        Debug.Log($"Selected building: {selectedBuildingPrefab.name}, Tag: {selectedBuildingPrefab.tag}");
+
         Vector3 mousePos = Camera.main.ScreenToWorldPoint(Input.mousePosition);
         mousePos.z = 0;
 
         mousePos.x = Mathf.Round(mousePos.x / tileSize) * tileSize;
         mousePos.y = Mathf.Round(mousePos.y / tileSize) * tileSize;
+        Debug.Log($"Mouse position: {mousePos}");
 
         Collider2D hit = Physics2D.OverlapPoint(mousePos);
         if (hit != null)
         {
-            Debug.Log("Cannot place building here, space is occupied!");
+            Debug.Log($"Cannot place building here, space is occupied! Hit: {hit.gameObject.name}");
             return;
         }
 
-        bool canAfford = false;
-        if (selectedCostType == ResourceManager.ResourceType.Gold)
+        bool hasTownHall = FindObjectsOfType<GameObject>().Any(obj => obj.CompareTag("TownHall"));
+        if (!hasTownHall && selectedBuildingPrefab.CompareTag("TownHall"))
         {
-            canAfford = resourceManager.SpendGold(selectedBuildingCost);
-        }
-        else if (selectedCostType == ResourceManager.ResourceType.Wood)
-        {
-            canAfford = resourceManager.SpendWood(selectedBuildingCost);
-        }
-        else if (selectedCostType == ResourceManager.ResourceType.Food)
-        {
-            canAfford = resourceManager.SpendFood(selectedBuildingCost);
+            hasTownHall = true;
         }
 
-        if (canAfford)
+        if (!hasTownHall)
+        {
+            Debug.Log("You must place a TownHall first!");
+            return;
+        }
+
+        Debug.Log($"Resources - Gold: {resourceManager.gold}, Wood: {resourceManager.wood}, Food: {resourceManager.food}");
+
+        if (selectedBuildingPrefab.CompareTag("TownHall") && resourceManager.SpendGold(100))
         {
             Instantiate(selectedBuildingPrefab, mousePos, Quaternion.identity);
-            Debug.Log($"Placed {selectedBuildingPrefab.name} at position {mousePos}");
-
-            if (selectedBuildingPrefab == townHallPrefab)
-            {
-                hasPlacedTownHall = true;
-            }
+            Debug.Log($"Placed TownHall at position {mousePos}");
+        }
+        else if (selectedBuildingPrefab.CompareTag("GoldMine") && resourceManager.SpendGold(100))
+        {
+            Instantiate(selectedBuildingPrefab, mousePos, Quaternion.identity);
+            resourceManager.population += 1;
+            Debug.Log($"Placed GoldMine at position {mousePos}");
+        }
+        else if (selectedBuildingPrefab.CompareTag("LumberMill") && resourceManager.SpendWood(50))
+        {
+            Instantiate(selectedBuildingPrefab, mousePos, Quaternion.identity);
+            resourceManager.population += 1;
+            Debug.Log($"Placed LumberMill at position {mousePos}");
+        }
+        else if (selectedBuildingPrefab.CompareTag("Farm") && resourceManager.SpendFood(20))
+        {
+            Instantiate(selectedBuildingPrefab, mousePos, Quaternion.identity);
+            resourceManager.population += 1;
+            Debug.Log($"Placed Farm at position {mousePos}");
+        }
+        else if (selectedBuildingPrefab.CompareTag("Barrack") && resourceManager.SpendFood(50))
+        {
+            Instantiate(selectedBuildingPrefab, mousePos, Quaternion.identity);
+            resourceManager.population += 1;
+            Debug.Log($"Placed Barrack at position {mousePos}");
         }
         else
         {
-            Debug.Log("Not enough resources to place building!");
+            Debug.Log("Not enough resources to place this building!");
         }
+
+        selectedBuildingPrefab = null;
     }
 }
