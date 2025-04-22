@@ -101,11 +101,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 82506a3844d841741b2e5eab564f8583, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  resourceType: 1
-  baseAmountPerSecond: 5
+  amountPerSecond: 5
   level: 1
   maxLevel: 3
-  amountPerSecond: 0
 --- !u!61 &-5711141660237451666
 BoxCollider2D:
   m_ObjectHideFlags: 0
